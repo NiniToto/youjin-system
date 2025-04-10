@@ -2,7 +2,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import ThemeToggler from "./ThemeToggler";
 import menuData from "./menuData";
 
@@ -24,16 +24,59 @@ const Header = () => {
   };
   useEffect(() => {
     window.addEventListener("scroll", handleStickyNavbar);
-  });
+    return () => {
+      window.removeEventListener("scroll", handleStickyNavbar);
+    };
+  }, []);
 
-  // submenu handler
-  const [openIndex, setOpenIndex] = useState(-1);
-  const handleSubmenu = (index) => {
-    if (openIndex === index) {
-      setOpenIndex(-1);
-    } else {
-      setOpenIndex(index);
+  // 언어 선택
+  const [language, setLanguage] = useState("ko");
+  const [langMenuOpen, setLangMenuOpen] = useState(false);
+  const langMenuRef = useRef(null);
+  
+  const changeLanguage = (lang) => {
+    setLanguage(lang);
+    setLangMenuOpen(false);
+    
+    // 언어 변경 시 로컬 스토리지에 저장
+    localStorage.setItem("selectedLanguage", lang);
+    
+    // 실제 언어 적용 (예시: HTML lang 속성 변경)
+    document.documentElement.lang = lang;
+    
+    // 페이지 콘텐츠에 언어 변경을 알림
+    const languageChangeEvent = new Event("languageChange");
+    window.dispatchEvent(languageChangeEvent);
+  };
+  
+  // 페이지 로드 시 저장된 언어 설정 복원
+  useEffect(() => {
+    const savedLanguage = localStorage.getItem("selectedLanguage");
+    if (savedLanguage) {
+      setLanguage(savedLanguage);
+      document.documentElement.lang = savedLanguage;
     }
+  }, []);
+  
+  // 언어 메뉴 외부 클릭 시 닫기
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (langMenuRef.current && !langMenuRef.current.contains(event.target)) {
+        setLangMenuOpen(false);
+      }
+    };
+    
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  const languageMap = {
+    ko: { text: "KR", title: "한국어" },
+    en: { text: "EN", title: "English" },
+    ja: { text: "JP", title: "日本語" },
+    zh: { text: "CN", title: "中文" }
   };
 
   const usePathName = usePathname();
@@ -57,45 +100,16 @@ const Header = () => {
                 } `}
               >
                 <Image
-                  src="/images/logo/logo-2.svg"
-                  alt="logo"
+                  src="/images/logo/youjin-power-logo.svg"
+                  alt="유진파워시스템 로고"
                   width={140}
                   height={30}
-                  className="w-full dark:hidden"
-                />
-                <Image
-                  src="/images/logo/logo.svg"
-                  alt="logo"
-                  width={140}
-                  height={30}
-                  className="hidden w-full dark:block"
+                  className="w-full dark:invert"
                 />
               </Link>
             </div>
             <div className="flex w-full items-center justify-between px-4">
               <div>
-                <button
-                  onClick={navbarToggleHandler}
-                  id="navbarToggler"
-                  aria-label="Mobile Menu"
-                  className="ring-primary absolute top-1/2 right-4 block translate-y-[-50%] rounded-lg px-3 py-[6px] focus:ring-2 lg:hidden"
-                >
-                  <span
-                    className={`relative my-1.5 block h-0.5 w-[30px] bg-black transition-all duration-300 dark:bg-white ${
-                      navbarOpen ? "top-[7px] rotate-45" : " "
-                    }`}
-                  />
-                  <span
-                    className={`relative my-1.5 block h-0.5 w-[30px] bg-black transition-all duration-300 dark:bg-white ${
-                      navbarOpen ? "opacity-0" : " "
-                    }`}
-                  />
-                  <span
-                    className={`relative my-1.5 block h-0.5 w-[30px] bg-black transition-all duration-300 dark:bg-white ${
-                      navbarOpen ? "top-[-8px] -rotate-45" : " "
-                    }`}
-                  />
-                </button>
                 <nav
                   id="navbarCollapse"
                   className={`navbar border-body-color/50 dark:border-body-color/20 dark:bg-dark absolute right-0 z-30 w-[250px] rounded border-[.5px] bg-white px-6 py-4 duration-300 lg:visible lg:static lg:w-auto lg:border-none lg:!bg-transparent lg:p-0 lg:opacity-100 ${
@@ -120,31 +134,19 @@ const Header = () => {
                           </Link>
                         ) : (
                           <>
-                            <p
-                              onClick={() => handleSubmenu(index)}
-                              className="text-dark group-hover:text-primary flex cursor-pointer items-center justify-between py-2 text-base lg:mr-0 lg:inline-flex lg:px-0 lg:py-6 dark:text-white/70 dark:group-hover:text-white"
+                            <Link
+                              href={menuItem.submenu[0].path}
+                              className="text-dark group-hover:text-primary flex cursor-pointer items-center py-2 text-base lg:mr-0 lg:inline-flex lg:px-0 lg:py-6 dark:text-white/70 dark:group-hover:text-white"
                             >
                               {menuItem.title}
-                              <span className="pl-3">
-                                <svg width="25" height="24" viewBox="0 0 25 24">
-                                  <path
-                                    fillRule="evenodd"
-                                    clipRule="evenodd"
-                                    d="M6.29289 8.8427C6.68342 8.45217 7.31658 8.45217 7.70711 8.8427L12 13.1356L16.2929 8.8427C16.6834 8.45217 17.3166 8.45217 17.7071 8.8427C18.0976 9.23322 18.0976 9.86639 17.7071 10.2569L12 15.964L6.29289 10.2569C5.90237 9.86639 5.90237 9.23322 6.29289 8.8427Z"
-                                    fill="currentColor"
-                                  />
-                                </svg>
-                              </span>
-                            </p>
+                            </Link>
                             <div
-                              className={`submenu dark:bg-dark relative top-full left-0 rounded-sm bg-white transition-[top] duration-300 group-hover:opacity-100 lg:invisible lg:absolute lg:top-[110%] lg:block lg:w-[250px] lg:p-4 lg:opacity-0 lg:shadow-lg lg:group-hover:visible lg:group-hover:top-full ${
-                                openIndex === index ? "block" : "hidden"
-                              }`}
+                              className="submenu dark:bg-dark relative top-full left-0 rounded-sm bg-white transition-[top] duration-300 lg:invisible lg:absolute lg:top-[110%] lg:block lg:w-[250px] lg:p-4 lg:opacity-0 lg:shadow-lg lg:group-hover:visible lg:group-hover:top-full lg:group-hover:opacity-100 block"
                             >
-                              {menuItem.submenu.map((submenuItem, index) => (
+                              {menuItem.submenu.map((submenuItem, idx) => (
                                 <Link
                                   href={submenuItem.path}
-                                  key={index}
+                                  key={idx}
                                   className="text-dark hover:text-primary block rounded-sm py-2.5 text-sm lg:px-3 dark:text-white/70 dark:hover:text-white"
                                 >
                                   {submenuItem.title}
@@ -158,22 +160,69 @@ const Header = () => {
                   </ul>
                 </nav>
               </div>
-              <div className="flex items-center justify-end pr-16 lg:pr-0">
+
+              <div className="flex items-center gap-4 xl:gap-7">
+                <ThemeToggler />
+
+                <div className="relative" ref={langMenuRef}>
+                  <button
+                    onClick={() => setLangMenuOpen(!langMenuOpen)}
+                    className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-200 dark:bg-gray-700 text-black dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600"
+                    title="언어 선택"
+                  >
+                    <span>{languageMap[language].text}</span>
+                  </button>
+                  
+                  {langMenuOpen && (
+                    <div className="absolute right-0 mt-2 w-32 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 z-50">
+                      <div className="py-1" role="menu" aria-orientation="vertical">
+                        {Object.entries(languageMap).map(([key, value]) => (
+                          <button
+                            key={key}
+                            onClick={() => changeLanguage(key)}
+                            className={`w-full text-left px-4 py-2 text-sm ${
+                              language === key 
+                                ? 'bg-primary text-white'
+                                : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
+                            }`}
+                            role="menuitem"
+                          >
+                            {value.text} - {value.title}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
                 <Link
                   href="/signin"
-                  className="text-dark hidden px-7 py-3 text-base font-medium hover:opacity-70 md:block dark:text-white"
+                  className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-200 dark:bg-gray-700 text-black dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600"
+                  title="관리자 로그인"
                 >
-                  Sign In
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                  </svg>
                 </Link>
-                <Link
-                  href="/signup"
-                  className="ease-in-up shadow-btn hover:shadow-btn-hover bg-primary hover:bg-primary/90 hidden rounded-xs px-8 py-3 text-base font-medium text-white transition duration-300 md:block md:px-9 lg:px-6 xl:px-9"
+
+                {/* Mobile Navbar Toggle */}
+                <button
+                  onClick={navbarToggleHandler}
+                  className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-white lg:hidden"
                 >
-                  Sign Up
-                </Link>
-                <div>
-                  <ThemeToggler />
-                </div>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    className="w-6 h-6"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M3 6.75A.75.75 0 013.75 6h16.5a.75.75 0 010 1.5H3.75A.75.75 0 013 6.75zM3 12a.75.75 0 01.75-.75h16.5a.75.75 0 010 1.5H3.75A.75.75 0 013 12zm0 5.25a.75.75 0 01.75-.75h16.5a.75.75 0 010 1.5H3.75a.75.75 0 01-.75-.75z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </button>
               </div>
             </div>
           </div>

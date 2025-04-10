@@ -1,6 +1,55 @@
+"use client";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 const Hero = () => {
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [isAutoplay, setIsAutoplay] = useState(true);
+  const slides = [
+    {
+      id: 1,
+      image: "/images/hero/power-grid.jpg",
+      title: "안정적인 전력 시스템",
+    },
+    {
+      id: 2,
+      image: "/images/hero/power-station.jpg",
+      title: "최고의 품질과 기술력",
+    },
+    {
+      id: 3,
+      image: "/images/hero/industry.jpg",
+      title: "산업의 핵심 파트너",
+    },
+  ];
+
+  const nextSlide = useCallback(() => {
+    setCurrentSlide((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
+  }, [slides.length]);
+
+  const prevSlide = useCallback(() => {
+    setCurrentSlide((prev) => (prev === 0 ? slides.length - 1 : prev - 1));
+  }, [slides.length]);
+  
+  const goToSlide = (index) => {
+    setCurrentSlide(index);
+  };
+
+  const toggleAutoplay = () => {
+    setIsAutoplay((prev) => !prev);
+  };
+
+  useEffect(() => {
+    let interval;
+    if (isAutoplay) {
+      interval = setInterval(() => {
+        nextSlide();
+      }, 5000);
+    }
+    return () => clearInterval(interval);
+  }, [isAutoplay, nextSlide]);
+
   return (
     <>
       <section
@@ -12,32 +61,112 @@ const Hero = () => {
             <div className="w-full px-4">
               <div className="mx-auto max-w-[800px] text-center">
                 <h1 className="mb-5 text-3xl font-bold leading-tight text-black dark:text-white sm:text-4xl sm:leading-tight md:text-5xl md:leading-tight">
-                  Free and Open-Source Next.js Template for Startup & SaaS
+                  유진 파워 시스템
                 </h1>
-                <p className="mb-12 text-base leading-relaxed! text-body-color dark:text-body-color-dark sm:text-lg md:text-xl">
-                  Startup is free Next.js template for startups and SaaS
-                  business websites comes with all the essential pages,
-                  components, and sections you need to launch a complete
-                  business website, built-with Next 13.x and Tailwind CSS.
+                <p className="mb-12 text-base leading-relaxed text-body-color dark:text-body-color-dark sm:text-lg md:text-xl">
+                  유진 파워 시스템은 최고의 품질과 기술력으로 전력계통 산업에서
+                  신뢰할 수 있는 파트너가 되겠습니다.
                 </p>
                 <div className="flex flex-col items-center justify-center space-y-4 sm:flex-row sm:space-x-4 sm:space-y-0">
                   <Link
-                    href="https://nextjstemplates.com/templates/saas-starter-startup"
+                    href="/products"
                     className="rounded-xs bg-primary px-8 py-4 text-base font-semibold text-white duration-300 ease-in-out hover:bg-primary/80"
                   >
-                    🔥 Get Pro
+                    제품 살펴보기
                   </Link>
                   <Link
-                    href="https://github.com/NextJSTemplates/startup-nextjs"
+                    href="/contact"
                     className="inline-block rounded-xs bg-black px-8 py-4 text-base font-semibold text-white duration-300 ease-in-out hover:bg-black/90 dark:bg-white/10 dark:text-white dark:hover:bg-white/5"
                   >
-                    Star on GitHub
+                    문의하기
                   </Link>
                 </div>
               </div>
             </div>
           </div>
         </div>
+
+        <div className="relative mt-12 h-[600px] w-full overflow-hidden">
+          {slides.map((slide, index) => (
+            <div
+              key={slide.id}
+              className={`absolute inset-0 transition-opacity duration-1000 ${
+                index === currentSlide ? "opacity-100" : "opacity-0"
+              }`}
+            >
+              <div className="absolute inset-0 bg-black/50 z-10"></div>
+              <div className="absolute inset-0 z-20 flex items-center justify-center">
+                <h2 className="text-4xl font-bold text-white">{slide.title}</h2>
+              </div>
+              <Image
+                src={slide.image}
+                alt={slide.title}
+                layout="fill"
+                objectFit="cover"
+                className="z-0"
+              />
+            </div>
+          ))}
+          
+          {/* 상단 컨트롤 - 인디케이터와 재생 버튼 */}
+          <div className="absolute top-4 right-4 z-30 flex items-center gap-2">
+            {/* 슬라이드 인디케이터 */}
+            <div className="flex gap-2">
+              {slides.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => goToSlide(index)}
+                  className={`h-3 w-3 rounded-full ${
+                    index === currentSlide
+                      ? "bg-primary"
+                      : "bg-white/60 hover:bg-white"
+                  } transition-all duration-300`}
+                  aria-label={`슬라이드 ${index + 1}로 이동`}
+                />
+              ))}
+            </div>
+            
+            {/* 자동 재생 토글 버튼 */}
+            <button
+              onClick={toggleAutoplay}
+              className="rounded-full bg-white/20 p-2 backdrop-blur-sm hover:bg-white/40 transition-all duration-300 ml-2"
+              aria-label={isAutoplay ? "자동 슬라이드 정지" : "자동 슬라이드 시작"}
+            >
+              {isAutoplay ? (
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
+                </svg>
+              )}
+            </button>
+          </div>
+          
+          {/* 좌측 이동 버튼 */}
+          <button
+            onClick={prevSlide}
+            className="absolute left-4 top-1/2 z-30 -translate-y-1/2 rounded-full bg-white/20 p-3 backdrop-blur-sm hover:bg-white/40 transition-all duration-300"
+            aria-label="이전 슬라이드"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+            </svg>
+          </button>
+          
+          {/* 우측 이동 버튼 */}
+          <button
+            onClick={nextSlide}
+            className="absolute right-4 top-1/2 z-30 -translate-y-1/2 rounded-full bg-white/20 p-3 backdrop-blur-sm hover:bg-white/40 transition-all duration-300"
+            aria-label="다음 슬라이드"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+            </svg>
+          </button>
+        </div>
+
         <div className="absolute right-0 top-0 z-[-1] opacity-30 lg:opacity-100">
           <svg
             width="450"
